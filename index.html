@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深宮狂想曲：有聲版</title>
+    <style>
+        :root {
+            --bg-color: #1a0505;
+            --text-color: #f2e2c4;
+            --accent-color: #d4af37;
+            --button-color: #8b0000;
+            --button-hover: #e0ac1a;
+            --container-bg: rgba(0, 0, 0, 0.75);
+            --border-style: 3px solid #d4af37;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "Microsoft JhengHei", "PingFang TC", "STHeiti", serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #4a1515 0%, #1a0505 100%),
+                url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNkNGFmMzciIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTAgMGg0MHY0MEgwVjB6bTIwIDIwaDIwdjIwSDIWMjB6TTAgMjBoMjB2MjBIMFYyMHoyMCAwaDIwdjIwSDIwVjB6Ii8+PC9nPjwvZz48L3N2Zz4=');
+        }
+
+        #game-wrapper {
+            max-width: 800px;
+            width: 95%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #game-container {
+            background-color: var(--container-bg);
+            border: var(--border-style);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(184, 134, 11, 0.5);
+        }
+
+        h1 {
+            color: var(--accent-color);
+            font-size: 2.5em;
+            margin-top: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #sound-toggle {
+            font-size: 0.4em;
+            background: #333;
+            color: #fff;
+            border: 1px solid var(--accent-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #story-text {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            min-height: 120px;
+            text-align: left;
+            padding: 0 20px;
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--button-color);
+            color: var(--text-color);
+            border: 2px solid var(--accent-color);
+            padding: 15px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 0 #5a0000;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+            color: #2b0f0f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #b8860b;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #5a0000;
+        }
+
+        /* 成就面板 */
+        #achievements-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 0.9em;
+        }
+
+        #achievements-title {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #achievement-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .achievement-badge {
+            background-color: #333;
+            color: #888;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #555;
+        }
+
+        .achievement-badge.unlocked {
+            background-color: var(--accent-color);
+            color: #1a0505;
+            border: 1px solid #fff;
+            font-weight: bold;
+        }
+
+        .ending-text {
+            color: #ffcccc;
+            font-weight: bold;
+            border: 2px dashed #ff6666;
+            padding: 20px;
+            background-color: rgba(255,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div id="game-container">
+            <h1>
+                深宮狂想曲
+                <button id="sound-toggle" onclick="toggleSound()">🔊 音效：開啟</button>
+            </h1>
+            <div id="story-text">載入中...</div>
+            <div class="choices" id="choices-container"></div>
+        </div>
+
+        <div id="achievements-container">
+            <div id="achievements-title">
+                <span>成就達成：<span id="unlocked-count">0</span>/10</span>
+                <button onclick="resetAchievements()" style="font-size:0.7em; padding: 2px 5px; background:#333; box-shadow:none; border:1px solid #777;">重置</button>
+            </div>
+            <div id="achievement-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // === 聲音合成系統 (Web Audio API) ===
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                // 瀏覽器要求必須在使用者互動後才能播放聲音
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-toggle').innerText = soundEnabled ? "🔊 音效：開啟" : "🔇 音效：關閉";
+        }
+
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (!soundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            // 聲音淡出效果，避免爆音
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClickSound() {
+            playTone(800, 'sine', 0.1, 0.05);
+        }
+
+        function playGoodEndingSound() {
+            // 上升音階，聽起來比較開心
+            playTone(440, 'triangle', 0.2, 0.1);
+            setTimeout(() => playTone(554, 'triangle', 0.2, 0.1), 200);
+            setTimeout(() => playTone(659, 'triangle', 0.4, 0.1), 400);
+            setTimeout(() => playTone(880, 'triangle', 0.6, 0.1), 600);
+        }
+
+        function playBadEndingSound() {
+            // 下降且沉重的音階，聽起來很慘
+            playTone(300, 'sawtooth', 0.3, 0.1);
+            setTimeout(() => playTone(280, 'sawtooth', 0.3, 0.1), 300);
+            setTimeout(() => playTone(250, 'sawtooth', 0.6, 0.1), 600);
+        }
+
+
+        // === 劇情資料庫 ===
+        const storyData = {
+            start: {
+                text: "妳是從五品太僕寺少卿的女兒。今日殿選，各色美女雲集。妳排在隊伍中，前方突然傳來一陣喧嘩，原來是一位秀女太過緊張暈倒了。此時皇上和太后正往這邊看來，妳決定：",
+                choices: [
+                    { text: "這是一個機會！立刻大喊「有人中暑啦」並衝上去做人工呼吸", target: "route_cpr" },
+                    { text: "保持優雅，保持微笑，假裝什麼都沒發生", target: "route_elegant" },
+                    { text: "悄悄伸出腳，把旁邊看起來比妳漂亮的秀女絆倒", target: "route_trip" }
+                ]
+            },
+            route_cpr: {
+                text: "妳突如其來的神操作和羞恥的大喊震驚了全場。侍衛差點把妳當刺客抓起來，但皇上對妳古怪的救人方式產生了濃厚的興趣。他覺得妳不做作，跟外面那些妖豔賤貨不一樣。恭喜，妳獲得封號「雷貴人」。\n\n幾日後，宮中流行性感冒，皇上宣妳侍寢，妳一進門，皇上就問妳：",
+                choices: [
+                    { text: "「愛妃，妳上次那個 CPR，能不能對朕做一次？」", target: "route_cpr_kiss" },
+                    { text: "「朕聽說妳家祖傳治療感冒有秘方？」", target: "route_cpr_secret" }
+                ]
+            },
+            route_cpr_kiss: {
+                text: "妳深吸一口氣，在皇上嘴上猛親了一下。皇上當場休克。皇太后大怒，認定妳想弒君。妳被賜死。臨死前，妳覺得自己死得很有創意。",
+                ending: "ending_1", isGoodEnding: false, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_cpr_secret: {
+                text: "妳回答：「回皇上，祖傳秘方是喝熱水加香菜。」皇上試了之後，感冒居然奇蹟般地好了。皇上大喜，封妳為「香妃」，妳在宮中推廣香菜，華貴妃因受不了香菜的味道選擇退隱。",
+                ending: "ending_2", isGoodEnding: true, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_elegant: {
+                text: "妳平淡無奇地入選了，被封為「白答應」，住進了偏僻的「冷香亭」。幾個月過去，皇上根本不記得妳。妳看著自己空蕩蕩的月銀袋子，妳覺得必須主動出擊：",
+                choices: [
+                    { text: "去御膳房偷吃，聽說皇上偶爾會去那裡視察", target: "route_food" },
+                    { text: "在御花園假裝上吊，吸引注意", target: "route_hang" },
+                    { text: "學習刺繡，給皇上繡一個「發財」的荷包", target: "route_stitch" }
+                ]
+            },
+            route_food: {
+                text: "妳在御膳房偷吃雞腿時，撞見了同樣來偷吃的皇上。兩人尷尬對視，皇上說：「這雞腿，朕注意妳很久了。」妳決定：",
+                choices: [
+                    { text: "把雞腿塞進皇上嘴裡，大喊「抓小偷」", target: "route_food_scream" },
+                    { text: "把雞腿分皇上一半，並分享妳的偷吃心得", target: "route_food_share" }
+                ]
+            },
+            route_food_scream: {
+                text: "妳的大喊引來了侍衛。雖然沒人敢抓皇上，但皇上面子掛不住。他覺得妳太過狂妄，將妳褫奪封號，貶為倒馬桶的宮女。妳在臭氣熏天中度過餘生。",
+                ending: "ending_3", isGoodEnding: false, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_food_share: {
+                text: "妳們一拍即合，從詩詞歌賦談到滿漢全席。皇上發現妳才是他的知音。他將妳封為「食神娘娘」，妳們每天在宮中開篝火晚會吃烤串，後宮變成了美食街。",
+                ending: "ending_4", isGoodEnding: true, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_hang: {
+                text: "妳掛在樹上時，剛好太后經過。太后覺得妳在宮中「鬧鬼」，破壞風水，將妳打入冷宮。妳在冷宮裡遇見了同樣掛在樹上的前朝妃子，妳們聊得很開心。",
+                ending: "ending_5", isGoodEnding: false, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_stitch: {
+                text: "妳日夜刺繡，視力降到 0.1。當妳把「發財」荷包獻給皇上時，皇上看著上面繡得像烏龜的字，大笑三聲，說：「愛妃真是有趣。」於是封妳為「趣嬪」。妳雖然看不清皇上的臉，但妳知道自己成功了。",
+                ending: "ending_6", isGoodEnding: true, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_trip: {
+                text: "那名秀女摔了個狗吃屎，妝容全毀。她正是華貴妃的表妹。妳的小動作被華貴妃當場抓住。她眼神冰冷地看著妳：「妳，很好。來人，把她帶到我的『翊坤宮』。」\n\n妳在宮中被華貴妃處處刁難，妳決定：",
+                choices: [
+                    { text: "加入華貴妃的陣營，幫她一起害人", target: "route_hua_join" },
+                    { text: "在皇上面前裝可憐，告發華貴妃", target: "route_hua_snitch" },
+                    { text: "半夜潛入華貴妃宮中，在她床上放一隻死耗子", target: "route_hua_rat" }
+                ]
+            },
+            route_hua_join: {
+                text: "妳成了華貴妃的得力助手，妳們聯手害人無數。最終，皇上厭倦了宮鬥，決定出家修道。皇后垂簾聽政，妳們雖然沒了皇上，但掌握了朝政。妳們決定發展電商，成立「翊坤宮嚴選」品牌。",
+                ending: "ending_7", isGoodEnding: true, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_hua_snitch: {
+                text: "皇上聽完妳的哭訴，嘆了口氣說：「華貴妃家勢顯赫，朕也沒辦法。要不，朕給妳一個『免死金牌』，妳拿去跟她交換點好處？」妳覺得皇上真是個廢物。",
+                ending: "ending_8", isGoodEnding: false, choices: [{ text: "重新開始", target: "start" }]
+            },
+            route_hua_rat: {
+                text: "耗子爬到了華貴妃的脸上。華貴妃驚嚇過度，精神失常。皇上聽聞後，將妳這無腦的女人賜死。妳在前往法場的路上，覺得自己至少贏了華貴妃一次。",
+                ending: "ending_9", isGoodEnding: false, choices: [{ text: "重新開始", target: "start" }]
+            },
+            easter_egg: {
+                text: "妳正在御花園散步，突然天崩地裂，一個藍色的大肚子貓型機器人從天而降。它說它叫多啦 A 夢，時光機壞了。它問妳要不要跟它去未來世界：",
+                choices: [
+                    { text: "宮鬥太累了，我要去未來！", target: "route_future" },
+                    { text: "不，我要留下來當皇后！", target: "start" }
+                ]
+            },
+            route_future: {
+                text: "妳來到了現代。妳發現這裏的女人都不用宮鬥，只要上班就行。妳覺得上班比宮鬥更痛苦。妳在寫字樓裡當前台，度過餘生。",
+                ending: "ending_10", isGoodEnding: false, choices: [{ text: "重新開始", target: "start" }]
+            }
+        };
+
+        const achievementData = {
+            ending_1: { title: "初吻弒君", desc: "死在皇上嘴上，妳是第一人。" },
+            ending_2: { title: "香菜帝國", desc: "用香菜征服後宮。" },
+            ending_3: { title: "馬桶女皇", desc: "與大自然的味道終身相伴。" },
+            ending_4: { title: "後宮美食節", desc: "與皇上一頓燒烤解決所有問題。" },
+            ending_5: { title: "冷宮上吊俱樂部", desc: "在冷宮找到新朋友圈。" },
+            ending_6: { title: "近視嬪妃", desc: "繡出發財，雖瞎猶榮。" },
+            ending_7: { title: "翊坤宮CEO", desc: "沒了皇上，我們還有事業。" },
+            ending_8: { title: "這皇上是廢物", desc: "獲得了官方認證的沒用金牌。" },
+            ending_9: { title: "耗子復仇記", desc: "死耗子贏了華貴妃。" },
+            ending_10: { title: "社畜的誕生", desc: "發現未來比古代更可怕。" }
+        };
+
+        // === 遊戲核心邏輯 ===
+        const storyTextEl = document.getElementById('story-text');
+        const choicesContainerEl = document.getElementById('choices-container');
+        let unlockedAchievements = JSON.parse(localStorage.getItem('palaceMadnessAchievements')) || {};
+
+        function renderAchievements() {
+            const listEl = document.getElementById('achievement-list');
+            listEl.innerHTML = '';
+            let count = 0;
+            for (let id in achievementData) {
+                const isUnlocked = unlockedAchievements[id];
+                if (isUnlocked) count++;
+                const badge = document.createElement('span');
+                badge.className = `achievement-badge ${isUnlocked ? 'unlocked' : ''}`;
+                badge.textContent = achievementData[id].title;
+                badge.title = isUnlocked ? achievementData[id].desc : "??? (達成結局解鎖)";
+                listEl.appendChild(badge);
+            }
+            document.getElementById('unlocked-count').textContent = count;
+        }
+
+        function resetAchievements() {
+            if (confirm("確定要重置所有成就嗎？")) {
+                initAudio();
+                playClickSound();
+                unlockedAchievements = {};
+                localStorage.setItem('palaceMadnessAchievements', JSON.stringify({}));
+                renderAchievements();
+                updateScreen('start');
+            }
+        }
+
+        function updateScreen(nodeId) {
+            initAudio(); // 確保每次更新畫面時音頻已初始化
+
+            const currentNode = storyData[nodeId];
+            if (nodeId === 'route_elegant' && !currentNode.ending && Math.random() < 0.15) {
+                updateScreen('easter_egg');
+                return;
+            }
+
+            storyTextEl.innerHTML = currentNode.text.replace(/\n/g, '<br>');
+            storyTextEl.classList.remove('ending-text');
+            choicesContainerEl.innerHTML = '';
+
+            // 結局判定與音效播放
+            if (currentNode.ending) {
+                unlockedAchievements[currentNode.ending] = true;
+                localStorage.setItem('palaceMadnessAchievements', JSON.stringify(unlockedAchievements));
+                renderAchievements();
+                storyTextEl.classList.add('ending-text');
+                storyTextEl.innerHTML += `<br><br>【結局達成：${achievementData[currentNode.ending].title}】`;
+                
+                // 播放結局音效
+                if(currentNode.isGoodEnding) {
+                    playGoodEndingSound();
+                } else {
+                    playBadEndingSound();
+                }
+            }
+
+            // 生成按鈕
+            currentNode.choices.forEach(choice => {
+                const button = document.createElement('button');
+                button.innerText = choice.text;
+                button.onclick = () => {
+                    playClickSound(); // 點擊時播放按鍵音
+                    updateScreen(choice.target);
+                };
+                choicesContainerEl.appendChild(button);
+            });
+        }
+
+        // 初始化
+        renderAchievements();
+        updateScreen('start');
+    </script>
+</body>
+</html>
